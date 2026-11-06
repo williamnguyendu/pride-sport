@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký tham gia Pride Sport</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* --- HIỆU ỨNG NỀN PASTEL DỊU MẮT (KHÔNG CHÓI) --- */
+        body {
+            transition: background 1.5s ease;
+        }
+        
+        /* Dải màu cực nhạt, êm ái cho mắt */
+        .bg-theme-boiloi { background: linear-gradient(135deg, #f0f9ff 0%, #bae6fd 100%); } /* Sky nhạt */
+        .bg-theme-caulong { background: linear-gradient(135deg, #f0fdf4 0%, #bbf7d0 100%); } /* Green nhạt */
+        .bg-theme-pickleball { background: linear-gradient(135deg, #fefce8 0%, #d9f99d 100%); } /* Lime/Yellow nhạt */
+        .bg-theme-khac { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); } /* Slate/Gray nhạt sang trọng */
+
+        /* Các khối sáng mờ được giảm opacity xuống mức 0.3 để không gắt */
+        .ambient-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(70px);
+            opacity: 0.3; 
+            animation: float-blob 12s infinite alternate ease-in-out;
+        }
+        @keyframes float-blob {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, -30px) scale(1.05); }
+        }
+
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: rise 18s infinite ease-in;
+        }
+        @keyframes rise {
+            0% { transform: translateY(110vh) scale(0.5); opacity: 0; }
+            20% { opacity: 0.6; }
+            100% { transform: translateY(-10vh) scale(1.2); opacity: 0; }
+        }
+
+        .feather {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.5rem;
+            animation: fall 22s infinite linear;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-10vh) rotate(0deg) translateX(0); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { transform: translateY(110vh) rotate(360deg) translateX(50px); opacity: 0; }
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95); /* Làm nền form đặc hơn 1 chút để dễ đọc chữ */
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 1);
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.06);
+        }
+    </style>
+</head>
+<body id="body-bg" class="min-h-screen font-sans text-gray-800 antialiased flex flex-col items-center px-4 py-8 sm:px-6 relative overflow-x-hidden bg-gray-50">
+
+    <!-- Container chứa hiệu ứng (fixed để không bị trôi khi scroll) -->
+    <div id="ambient-bg-container" class="fixed inset-0 z-0 overflow-hidden pointer-events-none"></div>
+
+    <!-- MAIN CONTENT (Thêm my-auto để tự động căn giữa khi màn hình dài, scroll bình thường khi màn hình ngắn) -->
+    <div id="main-content" class="relative z-10 w-full max-w-xl hidden my-auto">
+        
+        <div class="glass-card rounded-3xl overflow-hidden mb-6">
+            
+            <!-- KHU VỰC THÔNG TIN SỰ KIỆN NỔI BẬT -->
+            <div class="relative p-8 sm:p-10 border-b border-gray-100 bg-white/70 overflow-hidden text-center">
+                <!-- Branding Pride Sport Thể thao -->
+                <div class="mb-5 flex justify-center items-center gap-2 opacity-90">
+                    <i class="fas fa-fire-flame-curved text-orange-500 text-[13px]"></i>
+                    <span class="text-[11px] font-black tracking-[0.25em] text-gray-500 uppercase">Pride Sport</span>
+                    <i class="fas fa-fire-flame-curved text-orange-500 text-[13px]"></i>
+                </div>
+
+                <!-- Badges -->
+                <div class="flex items-center justify-center gap-2.5 mb-5 flex-wrap">
+                    <span id="ui-badge-mon" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-50 text-blue-600 shadow-sm border border-white">
+                        <i id="theme-icon" class="fas fa-trophy"></i>
+                        <span id="ui-mon-to-chuc">Sự kiện</span>
+                    </span>
+                    <span class="inline-flex items-center text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-white shadow-sm">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse mr-1.5"></span> Đang mở đăng ký
+                    </span>
+                </div>
+                
+                <!-- Tiêu đề lớn hoành tráng -->
+                <h1 id="ui-ten-sport" class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-gray-900 to-gray-600 leading-tight mb-8 drop-shadow-sm">Tên Sự Kiện</h1>
+                
+                <!-- Lưới hiển thị Thời gian & Địa điểm (Box sang trọng) -->
+                <div class="flex flex-col sm:flex-row justify-center gap-4 sm:gap-5 w-full">
+                    <div class="flex-1 flex items-center justify-start sm:justify-center gap-3 bg-white/90 backdrop-blur-md px-5 py-4 rounded-2xl border border-gray-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.03)]">
+                        <div class="w-10 h-10 shrink-0 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-lg">
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">Thời gian</p>
+                            <p id="ui-ngay-to-chuc" class="text-sm font-bold text-gray-800">--/--/----</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 flex items-center justify-start sm:justify-center gap-3 bg-white/90 backdrop-blur-md px-5 py-4 rounded-2xl border border-gray-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.03)]">
+                        <div class="w-10 h-10 shrink-0 rounded-full bg-red-50 text-red-400 flex items-center justify-center text-lg">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">Địa điểm</p>
+                            <p id="ui-dia-diem" class="text-sm font-bold text-gray-800 truncate max-w-[150px] sm:max-w-[120px]">Đang cập nhật</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KHU VỰC FORM ĐĂNG KÝ -->
+            <div class="p-6 sm:p-8">
+                
+                <!-- Status Box (Đóng/Chưa mở) -->
+                <div id="status-box" class="hidden text-center py-6 bg-gray-50 rounded-2xl border border-gray-200">
+                    <i class="fas fa-lock text-4xl text-gray-300 mb-3"></i>
+                    <h3 class="font-bold text-lg text-gray-700 mb-1">Cổng đăng ký chưa mở / Đã đóng</h3>
+                    <p class="text-sm text-gray-500">Liên hệ Zalo <a href="tel:0987500533" class="font-bold text-blue-500 hover:underline">0987.500.533</a> để được hỗ trợ.</p>
+                </div>
+
+                <!-- Form Chính -->
+                <div id="form-container" class="hidden">
+                    
+                    <div class="flex justify-between items-center mb-5 text-sm">
+                        <span class="text-gray-600 font-semibold uppercase tracking-wide text-xs">Nhập thông tin đăng ký</span>
+                        <span class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                            Mở đến <span id="ui-dang-ky-den" class="text-red-400">--:--</span>
+                        </span>
+                    </div>
+
+                    <!-- Ghi chú BTC -->
+                    <div id="event-notes-container" class="bg-orange-50/50 border border-orange-100 rounded-xl p-4 mb-6 hidden">
+                        <p class="font-bold text-xs text-orange-800 uppercase tracking-wide mb-2 flex items-center gap-1.5"><i class="fas fa-info-circle text-orange-400"></i> Lưu ý từ BTC</p>
+                        <ul id="ui-luu-y" class="list-disc pl-5 text-sm text-orange-900/80 space-y-1"></ul>
+                    </div>
+
+                    <form id="reg-form" class="space-y-4">
+                        <div>
+                            <label class="block text-gray-600 text-sm font-bold mb-1.5 ml-1" for="hoVaTen">Họ và Tên <span class="text-red-400">*</span></label>
+                            <input class="w-full bg-gray-50/50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-400 focus:bg-white transition-colors px-4 py-3 shadow-sm outline-none" id="hoVaTen" type="text" placeholder="Nhập họ và tên" required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-600 text-sm font-bold mb-1.5 ml-1" for="soDienThoai">Số điện thoại (Zalo) <span class="text-red-400">*</span></label>
+                            <input class="w-full bg-gray-50/50 border border-gray-200 text-gray-800 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-400 focus:bg-white transition-colors px-4 py-3 shadow-sm outline-none" id="soDienThoai" type="tel" placeholder="0987500533" required>
+                        </div>
+
+                        <!-- Điều khoản -->
+                        <div class="flex items-start gap-3 mt-4 px-1">
+                            <input type="checkbox" checked disabled class="mt-1 w-4 h-4 text-blue-500 rounded border-gray-300 shrink-0">
+                            <label class="text-[13px] text-gray-500 leading-relaxed">
+                                Đăng ký đồng nghĩa với việc tuân thủ <a href="https://www.pridehome.vn/p/nguyen-tac-ung-xu.html" target="_blank" class="font-bold text-gray-700 hover:text-blue-500 underline transition-colors">Nguyên Tắc Ứng Xử</a> và 4 tiêu chí: <strong>Văn Minh - Nghiêm Túc - Chân Thành - Tử Tế</strong>.
+                            </label>
+                        </div>
+
+                        <button type="submit" id="btn-submit" class="w-full text-white font-bold py-3.5 px-4 rounded-xl shadow-md hover:shadow-lg transition-all flex justify-center items-center gap-2 mt-2 bg-blue-500 hover:bg-blue-600">
+                            <span>Gửi Đăng Ký</span>
+                            <i class="fas fa-paper-plane text-sm"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Success Box -->
+                <div id="success-box" class="hidden text-center py-8">
+                    <div class="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-check text-3xl"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">Đăng ký thành công!</h2>
+                    <p class="text-gray-500 text-sm mb-5">Thông tin của bạn đã được gửi. Vui lòng chờ BTC duyệt và liên hệ qua Zalo.</p>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-sm text-gray-600">
+                        Cần hỗ trợ? Zalo: <a href="tel:0987500533" class="font-bold text-blue-500">0987.500.533</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quy định chung -->
+            <div class="bg-gray-50/50 px-6 py-5 border-t border-gray-100">
+                <ul class="text-[11px] text-gray-500 font-medium space-y-2">
+                    <li class="flex items-start gap-2"><i class="fas fa-check-circle text-gray-300 mt-0.5"></i> <span>Chỉ duyệt cho thành viên Pride Home. Chưa tham gia LH: 0987.500.533.</span></li>
+                    <li class="flex items-start gap-2"><i class="fas fa-check-circle text-gray-300 mt-0.5"></i> <span>Cho phép sử dụng hình ảnh cho mục đích truyền thông.</span></li>
+                    <li class="flex items-start gap-2"><i class="fas fa-check-circle text-gray-300 mt-0.5"></i> <span>Tuân thủ quy định của Ban Tổ Chức tại sự kiện.</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Footer / Link Bản Quyền -->
+        <div class="text-center text-[13px] text-gray-400 font-medium pb-4 z-10 relative">
+            Pride Sport là một hoạt động được tổ chức bởi <a href="https://www.pridehome.vn" target="_blank" class="font-bold text-gray-500 hover:text-blue-500 transition-colors">Pride Home</a>.
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm">
+        <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-blue-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="text-sm font-medium text-gray-500">Đang chuẩn bị form đăng ký...</p>
+    </div>
+
+    <script>
+        // --- THAY LINK WEB APP GOOGLE APPS SCRIPT VÀO ĐÂY ---
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzPg6C6V7aTWdAUG5aIiURFgcomUjZgrF5ia57LAULSmRjXCq5uLoyvUUutQJk-HQY/exec';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchEventData();
+        });
+
+        function fetchEventData() {
+            fetch(SCRIPT_URL + '?action=getEvent')
+                .then(res => res.json())
+                .then(response => {
+                    document.getElementById('loading-screen').classList.add('hidden');
+                    document.getElementById('main-content').classList.remove('hidden');
+
+                    if (response.success) {
+                        renderUI(response.data);
+                        setupAmbientBackground(response.data.MonToChuc);
+                    } else {
+                        showErrorUI();
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('loading-screen').classList.add('hidden');
+                    Swal.fire('Lỗi', 'Không thể kết nối đến hệ thống, vui lòng thử lại sau.', 'error');
+                });
+        }
+
+        function showErrorUI() {
+            document.getElementById('main-content').classList.remove('hidden');
+            document.getElementById('status-box').classList.remove('hidden');
+            document.getElementById('status-box').querySelector('h3').innerText = 'Không có sự kiện mở đăng ký';
+            setupAmbientBackground('Khác');
+        }
+
+        function setupAmbientBackground(monToChuc) {
+            const bodyBg = document.getElementById('body-bg');
+            const bgContainer = document.getElementById('ambient-bg-container');
+            const badgeMon = document.getElementById('ui-badge-mon');
+            const themeIcon = document.getElementById('theme-icon');
+            const btnSubmit = document.getElementById('btn-submit');
+            const titleColor = document.getElementById('ui-ten-sport');
+
+            let type = monToChuc.toLowerCase();
+            let html = '';
+
+            // Mặc định reset class cho body
+            bodyBg.className = "min-h-screen font-sans text-gray-800 antialiased flex flex-col items-center px-4 py-8 sm:px-6 relative overflow-x-hidden";
+
+            if (type.includes('bơi lội')) {
+                bodyBg.classList.add('bg-theme-boiloi');
+                titleColor.className = "text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-gray-700 to-sky-600 leading-tight mb-8 drop-shadow-sm";
+                badgeMon.className = "inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-100/50 text-sky-700 shadow-sm border border-white";
+                themeIcon.className = "fas fa-swimmer";
+                btnSubmit.className = "w-full text-white font-bold py-3.5 px-4 rounded-xl shadow-md hover:shadow-lg transition-all flex justify-center items-center gap-2 mt-2 bg-sky-500 hover:bg-sky-600";
+                
+                html = `
+                    <div class="ambient-blob bg-sky-200 w-96 h-96 top-[-10%] left-[-10%]"></div>
+                    <div class="ambient-blob bg-blue-200 w-80 h-80 bottom-[-10%] right-[-10%]" style="animation-delay: -5s"></div>
+                `;
+                for(let i=0; i<6; i++) {
+                    const size = Math.random() * 25 + 10;
+                    const left = Math.random() * 100;
+                    const delay = Math.random() * 15;
+                    const duration = Math.random() * 10 + 15;
+                    html += `<div class="bubble" style="width:${size}px; height:${size}px; left:${left}%; animation-delay:-${delay}s; animation-duration:${duration}s;"></div>`;
+                }
+            } 
+            else if (type.includes('cầu lông')) {
+                bodyBg.classList.add('bg-theme-caulong');
+                titleColor.className = "text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-gray-700 to-emerald-600 leading-tight mb-8 drop-shadow-sm";
+                badgeMon.className = "inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100/50 text-emerald-700 shadow-sm border border-white";
+                themeIcon.className = "fas fa-feather";
+                btnSubmit.className = "w-full text-white font-bold py-3.5 px-4 rounded-xl shadow-md hover:shadow-lg transition-all flex justify-center items-center gap-2 mt-2 bg-emerald-500 hover:bg-emerald-600";
+                
+                html = `
+                    <div class="ambient-blob bg-emerald-200 w-96 h-96 top-10 right-[-10%]"></div>
+                    <div class="ambient-blob bg-green-200 w-80 h-80 bottom-10 left-[-10%]" style="animation-delay: -4s"></div>
+                `;
+                for(let i=0; i<5; i++) {
+                    const left = Math.random() * 100;
+                    const delay = Math.random() * 20;
+                    const duration = Math.random() * 10 + 20;
+                    html += `<i class="fas fa-feather feather" style="left:${left}%; animation-delay:-${delay}s; animation-duration:${duration}s;"></i>`;
+                }
+            } 
+            else if (type.includes('pickleball')) {
+                bodyBg.classList.add('bg-theme-pickleball');
+                titleColor.className = "text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-gray-700 to-lime-600 leading-tight mb-8 drop-shadow-sm";
+                badgeMon.className = "inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-lime-100/60 text-lime-700 shadow-sm border border-white";
+                themeIcon.className = "fas fa-table-tennis";
+                btnSubmit.className = "w-full text-white font-bold py-3.5 px-4 rounded-xl shadow-md hover:shadow-lg transition-all flex justify-center items-center gap-2 mt-2 bg-lime-500 hover:bg-lime-600";
+                
+                html = `
+                    <div class="ambient-blob bg-yellow-200 w-96 h-96 top-[-5%] left-10"></div>
+                    <div class="ambient-blob bg-lime-200 w-96 h-96 bottom-[-10%] right-[-10%]" style="animation-delay: -7s"></div>
+                `;
+            } 
+            else {
+                bodyBg.classList.add('bg-theme-khac');
+                titleColor.className = "text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-gray-700 to-slate-600 leading-tight mb-8 drop-shadow-sm";
+                badgeMon.className = "inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-200/50 text-slate-600 shadow-sm border border-white";
+                themeIcon.className = "fas fa-running";
+                btnSubmit.className = "w-full text-white font-bold py-3.5 px-4 rounded-xl shadow-md hover:shadow-lg transition-all flex justify-center items-center gap-2 mt-2 bg-slate-600 hover:bg-slate-700";
+                
+                html = `
+                    <div class="ambient-blob bg-slate-300 w-96 h-96 top-0 left-[-20%]"></div>
+                    <div class="ambient-blob bg-gray-200 w-[500px] h-[500px] bottom-[-20%] right-[-20%]" style="animation-delay: -3s"></div>
+                `;
+            }
+
+            bgContainer.innerHTML = html;
+        }
+
+        function renderUI(data) {
+            document.getElementById('ui-ten-sport').innerText = data.TenSport;
+            document.getElementById('ui-ngay-to-chuc').innerText = data.NgayToChuc;
+            document.getElementById('ui-dia-diem').innerText = data.DiaDiem;
+            document.getElementById('ui-dang-ky-den').innerText = data.DangKyDenStr;
+            document.getElementById('ui-mon-to-chuc').innerText = data.MonToChuc;
+
+            if (data.LuuY && data.LuuY.trim() !== '') {
+                const luuYArr = data.LuuY.split(';').filter(item => item.trim() !== '');
+                if (luuYArr.length > 0) {
+                    const ulLuuY = document.getElementById('ui-luu-y');
+                    luuYArr.forEach(item => {
+                        let li = document.createElement('li');
+                        li.innerText = item.trim();
+                        ulLuuY.appendChild(li);
+                    });
+                    document.getElementById('event-notes-container').classList.remove('hidden');
+                }
+            }
+
+            const now = new Date().getTime();
+            if (now >= data.DangKyTu && now <= data.DangKyDen) {
+                document.getElementById('form-container').classList.remove('hidden');
+            } else {
+                document.getElementById('status-box').classList.remove('hidden');
+                if (now < data.DangKyTu) {
+                    document.getElementById('status-box').querySelector('h3').innerText = 'Cổng đăng ký chưa mở';
+                } else {
+                    document.getElementById('status-box').querySelector('h3').innerText = 'Cổng đăng ký đã đóng';
+                }
+            }
+        }
+
+        document.getElementById('reg-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const hoVaTen = document.getElementById('hoVaTen').value.trim();
+            const soDienThoai = document.getElementById('soDienThoai').value.trim();
+
+            const phoneRegex = /^(0|84)(3|5|7|8|9)[0-9]{8}$/;
+            if (!phoneRegex.test(soDienThoai)) {
+                Swal.fire('Lỗi', 'Vui lòng nhập đúng số điện thoại di động.', 'warning');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Đang xử lý...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading() }
+            });
+
+            const formData = new URLSearchParams();
+            formData.append('hoVaTen', hoVaTen);
+            formData.append('soDienThoai', soDienThoai);
+
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: formData,
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    Swal.close();
+                    document.getElementById('form-container').classList.add('hidden');
+                    document.getElementById('success-box').classList.remove('hidden');
+                } else {
+                    Swal.fire('Lỗi', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                Swal.fire('Lỗi', 'Không thể kết nối đến hệ thống.', 'error');
+            });
+        });
+    </script>
+</body>
+</html>
