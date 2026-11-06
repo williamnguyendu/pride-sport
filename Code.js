@@ -68,7 +68,8 @@ function getEventData() {
     // Trả về JSON
     const responseData = {
       TenSport: event.TenSport,
-      NgayToChuc: Utilities.formatDate(new Date(event.NgayToChuc), "GMT+7", "dd/MM/yyyy"),
+      // Đã cập nhật định dạng hiển thị thêm Giờ:Phút ở dòng dưới đây
+      NgayToChuc: Utilities.formatDate(new Date(event.NgayToChuc), "GMT+7", "dd/MM/yyyy HH:mm"),
       MonToChuc: event.MonToChuc,
       DiaDiem: event.DiaDiem,
       DangKyTu: new Date(event.DangKyTu).getTime(), // Trả về timestamp để Front-end dễ so sánh
